@@ -97,3 +97,5 @@ cmake-build-*
 third-party/folly/
 .cache
 *.sublime-*
+
+testdb/
