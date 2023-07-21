@@ -21,6 +21,7 @@ using namespace std::chrono;
 const uint64_t M = 1000000;
 const uint32_t key_size = 16;
 const uint32_t value_size = 64;
+const std::string DB_NAME = "testdb_rocksdb";
 
 string generate_key(const string& key) {
   string result = string(key_size - key.length(), '0') + key;
@@ -37,7 +38,7 @@ int main() {
   /**
    * REMOVE OLD DATABASE (switch -A)
    */
-  system("rm -rf ./testdb");
+  system(("rm -rf " + DB_NAME).data());
 
   /**
    * IMPORTANT CONFIG, DO NOT MODIFY
@@ -53,15 +54,22 @@ int main() {
    * TEST OPEN()
    */
   const uint64_t kNum = 100 * M;
-  Status status = DB::Open(options, "./testdb", &db);
+  Status status = DB::Open(options, DB_NAME, &db);
 
   /**
    * READ DATA
    */
   std::ifstream in("/media/yjn/jiananyuan/DataSet/SOSD/books_200M_uint32.csv");
   if (in.fail()) {
-    std::cout << "File does not exist" << std::endl;
-    return 0;
+    in.close();
+    in.open("/home/jiananyuan/Desktop/lsim_dataset/SOSD/books_200M_uint32.csv");
+    if (in.fail()) {
+      std::cout << "dataset not found" << std::endl;
+      return 0;
+    }
+    std::cout << "use 506 server dataset" << std::endl;
+  } else {
+    std::cout << "use 506 computer dataset" << std::endl;
   }
   std::vector<std::string> keys;
   keys.resize(kNum);
