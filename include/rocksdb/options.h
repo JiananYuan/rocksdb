@@ -1521,7 +1521,7 @@ struct ReadOptions {
 
   // If true, all data read from underlying storage will be
   // verified against corresponding checksums.
-  bool verify_checksums = true;
+  bool verify_checksums = false;
 
   // Should the "data block"/"index block" read for this iteration be placed in
   // block cache?
