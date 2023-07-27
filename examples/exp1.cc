@@ -311,9 +311,10 @@ int main(int argc, char** argv) {
       if (ops <= change_threshold) {
         string key;
         if (read_type == "rand") {
-          key = generate_key(keys[i]);
+          key = generate_key(keys[i % keys.size()]);
         } else if (read_type == "zipf") {
-          int idx = zipf_gen.nextValue();
+          ScrambledZipfianGenerator zipf_gen2(keys.size());
+          int idx = zipf_gen2.nextValue();
           key = generate_key(keys[idx]);
         }
         string val;
@@ -328,6 +329,7 @@ int main(int argc, char** argv) {
         st_time = high_resolution_clock::now();
         status = db->Put(write_options, key, val);
         end_time = high_resolution_clock::now();
+        keys.emplace_back(key);
       }
       auto duration = duration_cast<nanoseconds>(end_time - st_time).count();
       latencies.push_back(duration);

@@ -11,3 +11,12 @@ transaction_example
 rocksdb_example
 build/
 exp1
+# below are the database files and logs
+*.sst
+*.result
+*.log
+CURRENT
+IDENTITY
+LOCK
+MANIFEST-*
+OPTIONS-*
