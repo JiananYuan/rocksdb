@@ -11,6 +11,7 @@ transaction_example
 rocksdb_example
 build/
 exp1
+exp2
 # below are the database files and logs
 *.sst
 *.result
