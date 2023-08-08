@@ -1,7 +1,5 @@
 # 编译: cmake .. -DCMAKE_BUILD_TYPE=Release -DNDEBUG_SWITCH=ON
 
-cd ../build
-
 # todo : 更多数据集?
 for dist in books_100M fb_100M osm_100M wiki_100M; do
 	  echo "[${dist} 测试1] 只读吞吐率 | 99尾延迟 | zipf点查询平均延迟 | 随机加载构建时间"
