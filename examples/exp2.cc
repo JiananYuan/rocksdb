@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     ("m,number_ops", "operation number (million)", cxxopts::value<double>(num_ops)->default_value("10"))
     ("w,write_type", "write rand or seq", cxxopts::value<std::string>(write_type)->default_value("rand"))
     ("r,read_type", "five read types", cxxopts::value<std::string>(read_type)->default_value("zipf"))
-    ("d,dataset_name", "name of the dataset", cxxopts::value<std::string>(ds_name)->default_value("books_100M"))
+    ("d,dataset_name", "name of the dataset", cxxopts::value<std::string>(ds_name)->default_value("books"))
     ("k, key_size", "byte size of the key", cxxopts::value<uint32_t>(key_size)->default_value("20"))
     ("v, value_size", "byte size of the value", cxxopts::value<uint32_t>(value_size)->default_value("64"))
     ("l, range_length", "length of range query", cxxopts::value<uint32_t>(range_length)->default_value("0"))
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
   const std::string ds_write_heavy = dir_path + ds_name + "/" + ds_name + "_write_heavy.csv";
 
   // REMOVE OLD DATABASE
-  system(("rm -rf " + db_path).data());
+  // system(("rm -rf " + db_path).data());
 
   // CONFIG LEADER-TREE
   DB* db;
@@ -113,6 +113,7 @@ int main(int argc, char** argv) {
   std::ifstream in;
   if (write_type == "rand")   in.open(ds_rand_path);
   if (write_type == "seq")    in.open(ds_seq_path);
+  if (write_type == "none")   goto TEST_CASE;
 
   // TEST PUT()
   double bulkload_time = 0;
@@ -138,7 +139,7 @@ int main(int argc, char** argv) {
   in.close();
 
   // TEST CASE
-  std::cout << "[3/4] testing... " << std::endl;
+  TEST_CASE: std::cout << "[3/4] testing... " << std::endl;
   double ops_time = 0;
   std::vector<double> latencies;
 
