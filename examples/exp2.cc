@@ -91,12 +91,14 @@ int main(int argc, char** argv) {
   // CONFIG LEADER-TREE
   DB* db;
   Options options;
-  options.level_compaction_dynamic_level_bytes = true;
+  options.IncreaseParallelism();
+  options.OptimizeLevelStyleCompaction();
+  // options.level_compaction_dynamic_level_bytes = true;
   options.target_file_size_base = 2 * 1024 * 1024;
   options.paranoid_checks = false;
   options.max_open_files = 65536;
   options.max_background_jobs = 1;
-  options.write_buffer_size = 4 * 1024 * 1024;
+  // options.write_buffer_size = 4 * 1024 * 1024;
   options.compression = rocksdb::kNoCompression;
   options.create_if_missing = true;
   ReadOptions read_options = ReadOptions();
@@ -110,14 +112,14 @@ int main(int argc, char** argv) {
   Status status = DB::Open(options, db_path, &db);
 
   // READ DATA
-  std::ifstream in;
-  if (write_type == "rand")   in.open(ds_rand_path);
-  if (write_type == "seq")    in.open(ds_seq_path);
-  if (write_type == "none")   goto TEST_CASE;
-
-  // TEST PUT()
   double bulkload_time = 0;
   int print_interval = kNum / 128;
+  std::ifstream in;
+  if (write_type == "none")   goto TEST_CASE;
+  if (write_type == "rand")   in.open(ds_rand_path);
+  if (write_type == "seq")    in.open(ds_seq_path);
+
+  // TEST PUT()
   std::cout << "[2/4] bulkloading data... " << std::endl;
   for (int i = 0; i < kNum; i += 1) {
     if (i % print_interval == 0) {
