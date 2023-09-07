@@ -5,9 +5,9 @@ val_size=64
 init_scale=10
 test_scale=2
 
-rm -r test_*
+rm -rf test_*
 
-for dist in books fb osm wiki; do
+for dist in books fb osm wiki logn; do
     echo "[${dist} 测试1] 只读吞吐率 | 99尾延迟 | zipf点查询平均延迟 | 随机加载构建时间"
     ./exp2 -p test_read_only -n ${init_scale} -m ${test_scale} -w rand -r zipf -d ${dist} -k ${key_size} -v ${val_size} -o ../results/${dist}_exp_read_only.txt
     # 复制当前数据库给测试2使用
@@ -16,12 +16,12 @@ for dist in books fb osm wiki; do
     cp -r test_read_only test_read_midd
     # 复制当前数据库给测试4使用
     cp -r test_read_only test_read_less
-    if [ ${dist} == books ]; then
-        # 复制当前数据库给测试6使用
-        cp -r test_read_only test_range
-        # 复制当前数据库给测试10使用
-        cp -r test_read_only test_read_breakdown
-    fi
+    # if [ ${dist} == books ]; then
+    #     # 复制当前数据库给测试6使用
+    #     cp -r test_read_only test_range
+    #     # 复制当前数据库给测试10使用
+    #     cp -r test_read_only test_read_breakdown
+    # fi
     rm -r test_read_only
 
     echo "[${dist} 测试2] 读多写少吞吐率"
@@ -41,9 +41,9 @@ for dist in books fb osm wiki; do
     rm -r test_load_seq
 done
 
-echo "[测试6] 范围查询时延 | 吞吐率"
-./exp2 -p test_range -n ${init_scale} -m 1 -w none -r range -l 500 -d books -k ${key_size} -v ${val_size} -o ../results/exp_read_breakdown.txt
-rm -r test_range
+# echo "[测试6] 范围查询时延 | 吞吐率"
+# ./exp2 -p test_range -n ${init_scale} -m 1 -w none -r range -l 500 -d books -k ${key_size} -v ${val_size} -o ../results/exp_read_breakdown.txt
+# rm -r test_range
 
 # for vs in 128 256 512 1024; do
 #     echo "[测试7 value_size: ${vs}] 不同value_size 对zipf只读情形吞吐量的影响"

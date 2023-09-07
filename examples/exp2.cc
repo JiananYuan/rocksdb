@@ -37,7 +37,7 @@ string generate_value(uint64_t value) {
 }
 
 int main(int argc, char** argv) {
-  system("sync; echo 3 | sudo tee /proc/sys/vm/drop_caches");
+  // system("sync; echo 3 | sudo tee /proc/sys/vm/drop_caches");
   // print now time
   auto now = std::chrono::system_clock::now();
   std::time_t current_time = std::chrono::system_clock::to_time_t(now);
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
   options.IncreaseParallelism();
   options.OptimizeLevelStyleCompaction();
   // options.level_compaction_dynamic_level_bytes = true;
-  options.target_file_size_base = 2 * 1024 * 1024;
+  // options.target_file_size_base = 2 * 1024 * 1024;
   options.paranoid_checks = false;
   options.max_open_files = 65536;
   options.max_background_jobs = 1;
