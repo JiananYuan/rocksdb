@@ -11,11 +11,11 @@ for dist in books fb osm wiki logn; do
     echo "[${dist} 测试1] 只读吞吐率 | 99尾延迟 | zipf点查询平均延迟 | 随机加载构建时间"
     ./exp2 -p test_read_only -n ${init_scale} -m ${test_scale} -w rand -r zipf -d ${dist} -k ${key_size} -v ${val_size} -o ../results/${dist}_exp_read_only.txt
     # 复制当前数据库给测试2使用
-    cp -r test_read_only test_read_more
+     cp -r test_read_only test_read_more
     # 复制当前数据库给测试3使用
-    cp -r test_read_only test_read_midd
+     cp -r test_read_only test_read_midd
     # 复制当前数据库给测试4使用
-    cp -r test_read_only test_read_less
+     cp -r test_read_only test_read_less
     # if [ ${dist} == books ]; then
     #     # 复制当前数据库给测试6使用
     #     cp -r test_read_only test_range
