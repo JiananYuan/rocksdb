@@ -7,7 +7,7 @@ test_scale=2
 
 rm -rf test_*
 
-for dist in books fb osm wiki logn; do
+for dist in books fb osm wiki logn uniform; do
     echo "[${dist} 测试1] 只读吞吐率 | 99尾延迟 | zipf点查询平均延迟 | 随机加载构建时间"
     ./exp2 -p test_read_only -n ${init_scale} -m ${test_scale} -w rand -r zipf -d ${dist} -k ${key_size} -v ${val_size} -o ../results/${dist}_exp_read_only.txt
     # 复制当前数据库给测试2使用
