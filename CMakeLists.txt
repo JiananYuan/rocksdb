@@ -208,6 +208,8 @@ else()
   endif()
 endif()
 
+add_compile_options(-Ofast)
+
 include(CheckCCompilerFlag)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64")
   CHECK_C_COMPILER_FLAG("-mcpu=power9" HAS_POWER9)
@@ -777,6 +779,8 @@ set(SOURCES
         port/stack_trace.cc
         table/adaptive/adaptive_table_factory.cc
         table/block_based/binary_search_index_reader.cc
+        examples/var.h
+        examples/var.cpp
         table/block_based/block.cc
         table/block_based/block_based_table_builder.cc
         table/block_based/block_based_table_factory.cc

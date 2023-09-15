@@ -54,6 +54,7 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/work_queue.h"
+#include "examples/var.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -1958,6 +1959,7 @@ Status BlockBasedTableBuilder::Finish() {
   MetaIndexBuilder meta_index_builder;
   WriteFilterBlock(&meta_index_builder);
   WriteIndexBlock(&meta_index_builder, &index_block_handle);
+  adgMod::idx_sz += index_block_handle.size();
   WriteCompressionDictBlock(&meta_index_builder);
   WriteRangeDelBlock(&meta_index_builder);
   WritePropertiesBlock(&meta_index_builder);

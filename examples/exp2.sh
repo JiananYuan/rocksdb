@@ -2,8 +2,8 @@
 
 key_size=20
 val_size=64
-init_scale=10
-test_scale=2
+init_scale=64
+test_scale=10
 
 rm -rf test_*
 
