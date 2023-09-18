@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
   const string dir_path = "/home/yjn/Desktop/VLDB/Dataset/";
   const std::string kWrite = "W";
   const std::string kRead = "R";
+  int start_type;
 
   cxxopts::Options commandline_options("leader tree test", "Testing leader tree.");
   commandline_options.add_options()
@@ -63,7 +64,8 @@ int main(int argc, char** argv) {
     ("d,dataset_name", "name of the dataset", cxxopts::value<std::string>(ds_name)->default_value("books"))
     ("k, key_size", "byte size of the key", cxxopts::value<uint32_t>(key_size)->default_value("20"))
     ("v, value_size", "byte size of the value", cxxopts::value<uint32_t>(value_size)->default_value("64"))
-    ("o, output_file", "path of result output file", cxxopts::value<std::string>(exp_log_file)->default_value("minilog"));
+    ("o, output_file", "path of result output file", cxxopts::value<std::string>(exp_log_file)->default_value("minilog"))
+    ("s, start_type", "start type id", cxxopts::value<int>(start_type)->default_value("0"));
   auto result = commandline_options.parse(argc, argv);
   if (result.count("help")) {
     printf("%s", commandline_options.help().c_str());
@@ -88,13 +90,12 @@ int main(int argc, char** argv) {
   options.OptimizeLevelStyleCompaction();
   options.create_if_missing = true;
   // options.level_compaction_dynamic_level_bytes = true;
-  // options.target_file_size_base = 2 * 1024 * 1024;
-  // options.write_buffer_size = 4 * 1024 * 1024;
-
-  // options.paranoid_checks = false;
-  // options.max_open_files = 65536;
-  // options.max_background_jobs = 1;
-  // options.compression = rocksdb::kNoCompression;
+  options.write_buffer_size = 4 * 1024 * 1024;
+  options.target_file_size_base = 2 * 1024 * 1024;
+  options.paranoid_checks = false;
+  options.max_open_files = 65536;
+  options.max_background_jobs = 1;
+  options.compression = rocksdb::kNoCompression;
 
   ReadOptions read_options = ReadOptions();
   WriteOptions write_options = WriteOptions();
@@ -135,8 +136,8 @@ int main(int argc, char** argv) {
   in.close();
 
   // TEST CASE
-  for (int ei = 0; ei < 4; ei += 1) {
-		switch (ei) {
+  for (int ei = start_type; ei < 4; ei += 1) {
+    switch (ei) {
       case 0:
         std::cout << "[3/4] testing-1 (write-more)... " << std::endl;
         in.open(ds_write_heavy);

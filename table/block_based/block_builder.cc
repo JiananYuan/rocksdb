@@ -41,6 +41,7 @@
 #include "rocksdb/comparator.h"
 #include "table/block_based/data_block_footer.h"
 #include "util/coding.h"
+#include "examples/var.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -127,6 +128,7 @@ size_t BlockBuilder::EstimateSizeAfterKV(const Slice& key,
 Slice BlockBuilder::Finish() {
   // Append restart array
   for (size_t i = 0; i < restarts_.size(); i++) {
+    adgMod::idx_sz += sizeof(restarts_[i]);
     PutFixed32(&buffer_, restarts_[i]);
   }
 
@@ -143,6 +145,7 @@ Slice BlockBuilder::Finish() {
   uint32_t block_footer = PackIndexTypeAndNumRestarts(index_type, num_restarts);
 
   PutFixed32(&buffer_, block_footer);
+  adgMod::idx_sz += sizeof(block_footer);
   finished_ = true;
   return Slice(buffer_);
 }
