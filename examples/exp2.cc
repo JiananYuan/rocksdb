@@ -4,8 +4,8 @@
 #include <vector>
 #include <sstream>
 
-#include "leveldb/comparator.h"
-#include "leveldb/db.h"
+// #include "leveldb/comparator.h"
+// #include "leveldb/db.h"
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/slice.h"
