@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
   options.create_if_missing = true;
   // options.level_compaction_dynamic_level_bytes = true;
   options.write_buffer_size = 4 * 1024 * 1024;
-  options.target_file_size_base = 2 * 1024 * 1024;
+  // options.target_file_size_base = 2 * 1024 * 1024;
   options.paranoid_checks = false;
-  options.max_open_files = 65536;
+  // options.max_open_files = 65536;
   options.max_background_jobs = 1;
   options.compression = rocksdb::kNoCompression;
 
