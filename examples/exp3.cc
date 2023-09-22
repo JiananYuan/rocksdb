@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     ("k, key_size", "byte size of the key", cxxopts::value<uint32_t>(key_size)->default_value("20"))
     ("v, value_size", "byte size of the value", cxxopts::value<uint32_t>(value_size)->default_value("64"))
     ("o, output_file", "path of result output file", cxxopts::value<std::string>(exp_log_file)->default_value("minilog"))
-    ("s, start_type", "start type id", cxxopts::value<int>(start_type)->default_value("0"));
+    ("s, start_type", "start type id", cxxopts::value<int>(start_type)->default_value("2"));
   auto result = commandline_options.parse(argc, argv);
   if (result.count("help")) {
     printf("%s", commandline_options.help().c_str());
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
   in.close();
 
   // TEST CASE
-  for (int ei = start_type; ei < 4; ei += 1) {
+  for (int ei = start_type; ei < 3; ei += 1) {
     switch (ei) {
       case 0:
         std::cout << "[3/4] testing-1 (write-more)... " << std::endl;
@@ -185,9 +185,19 @@ int main(int argc, char** argv) {
         ss >> line;  // key
         line = generate_key(line);
         string val;
+
+        rocksdb::ReadOptions iter_option;
+        iter_option.fill_cache = false;
+        auto iter = db->NewIterator(iter_option);
+        const int range_length = 100;
+        uint32_t cnt = 0;
         st_time = high_resolution_clock::now();
-        status = db->Get(read_options, line, &val);
+        for (iter->Seek(line); iter->Valid() && cnt < range_length; iter->Next()) {
+          cnt += 1;
+        }
+        // status = db->Get(read_options, line, &val);
         end_time = high_resolution_clock::now();
+        delete iter;
         if (status.IsNotFound())    exist_not_found = true;
       }
       auto duration = duration_cast<nanoseconds>(end_time - st_time).count();
