@@ -186,7 +186,6 @@ int main(int argc, char** argv) {
       } else if (line == kRead) {
         ss >> line;  // key
         line = generate_key(line);
-        string val;
         if (range_query) {
           rocksdb::ReadOptions iter_option;
           iter_option.fill_cache = false;
@@ -200,6 +199,7 @@ int main(int argc, char** argv) {
           end_time = high_resolution_clock::now();
           delete iter;
         } else {
+          string val;
           st_time = high_resolution_clock::now();
           status = db->Get(read_options, line, &val);
           end_time = high_resolution_clock::now();
