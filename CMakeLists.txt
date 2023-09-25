@@ -208,8 +208,6 @@ else()
   endif()
 endif()
 
-add_compile_options(-Ofast)
-
 include(CheckCCompilerFlag)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64")
   CHECK_C_COMPILER_FLAG("-mcpu=power9" HAS_POWER9)
