@@ -92,11 +92,11 @@ int main(int argc, char** argv) {
   options.OptimizeLevelStyleCompaction();
   options.create_if_missing = true;
   // options.level_compaction_dynamic_level_bytes = true;
-  options.write_buffer_size = 4 * 1024 * 1024;
-  // options.target_file_size_base = 64 * 1024 * 1024;
+  options.write_buffer_size = 64 * 1024 * 1024;
+  options.target_file_size_base = 64 * 1024 * 1024;
   options.paranoid_checks = false;
   options.max_open_files = 65536;
-  options.max_background_jobs = 8;
+  options.max_background_jobs = 1;
   options.compression = rocksdb::kNoCompression;
 
   ReadOptions read_options = ReadOptions();
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
   status = DB::Open(options, db_path, &db);
 
   // TEST CASE
-  for (int ei = start_type; ei < 1; ei += 1) {
+  for (int ei = start_type; ei < 4; ei += 1) {
     switch (ei) {
       case 0:
         std::cout << "[3/4] testing-1 (write-more)... " << std::endl;
