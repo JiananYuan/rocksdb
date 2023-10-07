@@ -11,6 +11,7 @@
 #include "rocksdb/slice.h"
 #include "rocksdb/compression_type.h"
 #include "rocksdb/filter_policy.h"
+#include "rocksdb/table.h"
 #include "cxxopts.hpp"
 #include "var.h"
 
@@ -52,14 +53,14 @@ int main(int argc, char** argv) {
   const string dir_path = "/home/yjn/Desktop/VLDB/Dataset/";
   const std::string kWrite = "W";
   const std::string kRead = "R";
-  int start_type;
+  int start_type, end_type;
   bool range_query;
 
   cxxopts::Options commandline_options("leader tree test", "Testing leader tree.");
   commandline_options.add_options()
     ("h,help", "print help message", cxxopts::value<bool>()->default_value("false"))
-    ("p,db_path", "path of the database", cxxopts::value<std::string>(db_path)->default_value("minitest"))
-    ("n,number_data", "data number (million)", cxxopts::value<double>(num_data)->default_value("50"))
+    ("p,db_path", "path of the database", cxxopts::value<std::string>(db_path)->default_value("books_range"))
+    ("n,number_data", "data number (million)", cxxopts::value<double>(num_data)->default_value("64"))
     ("m,number_ops", "operation number (million)", cxxopts::value<double>(num_ops)->default_value("10"))
     ("w,write_type", "write rand or seq", cxxopts::value<std::string>(write_type)->default_value("rand"))
     ("d,dataset_name", "name of the dataset", cxxopts::value<std::string>(ds_name)->default_value("books"))
@@ -67,7 +68,8 @@ int main(int argc, char** argv) {
     ("v, value_size", "byte size of the value", cxxopts::value<uint32_t>(value_size)->default_value("64"))
     ("o, output_file", "path of result output file", cxxopts::value<std::string>(exp_log_file)->default_value("minilog"))
     ("r, range_query", "use range query", cxxopts::value<bool>(range_query)->default_value("false"))
-    ("s, start_type", "start type id", cxxopts::value<int>(start_type)->default_value("0"));
+    ("s, start_type", "start type id", cxxopts::value<int>(start_type)->default_value("0"))
+    ("e, end_type", "end type id", cxxopts::value<int>(end_type)->default_value("4"));
   auto result = commandline_options.parse(argc, argv);
   if (result.count("help")) {
     printf("%s", commandline_options.help().c_str());
@@ -88,8 +90,8 @@ int main(int argc, char** argv) {
   // CONFIG LEADER-TREE
   DB* db;
   Options options;
-  options.IncreaseParallelism();
-  options.OptimizeLevelStyleCompaction();
+  // options.IncreaseParallelism();
+  // options.OptimizeLevelStyleCompaction();
   options.create_if_missing = true;
   // options.level_compaction_dynamic_level_bytes = true;
   options.write_buffer_size = 64 * 1024 * 1024;
@@ -98,7 +100,9 @@ int main(int argc, char** argv) {
   options.max_open_files = 65536;
   options.max_background_jobs = 1;
   options.compression = rocksdb::kNoCompression;
-
+  rocksdb::BlockBasedTableOptions table_options;
+  table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, false));
+  options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
   ReadOptions read_options = ReadOptions();
   WriteOptions write_options = WriteOptions();
   write_options.sync = false;
@@ -118,7 +122,7 @@ int main(int argc, char** argv) {
 
   // TEST PUT()
   std::cout << "[2/4] bulkloading data... " << std::endl;
-  for (int i = 0; i < kNum; i += 1) {
+  for (uint64_t i = 0; i < kNum; i += 1) {
     if (i % print_interval == 0) {
       printf("\rprogress : %.2f%%", 100.0 * i / kNum);
       fflush(stdout);
@@ -141,7 +145,7 @@ int main(int argc, char** argv) {
   status = DB::Open(options, db_path, &db);
 
   // TEST CASE
-  for (int ei = start_type; ei < 4; ei += 1) {
+  for (int ei = start_type; ei < end_type; ei += 1) {
     switch (ei) {
       case 0:
         std::cout << "[3/4] testing-1 (write-more)... " << std::endl;
