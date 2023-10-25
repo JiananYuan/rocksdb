@@ -81,6 +81,12 @@ option(WITH_LZ4 "build with lz4" OFF)
 option(WITH_ZLIB "build with zlib" OFF)
 option(WITH_ZSTD "build with zstd" OFF)
 option(WITH_WINDOWS_UTF8_FILENAMES "use UTF8 as characterset for opening files, regardles of the system code page" OFF)
+option(INTERNAL_TIMER_SWITCH "Enable internal timer" OFF)
+
+if (INTERNAL_TIMER_SWITCH)
+  add_definitions(-DINTERNAL_TIMER)
+endif(INTERNAL_TIMER_SWITCH)
+
 if (WITH_WINDOWS_UTF8_FILENAMES)
   add_definitions(-DROCKSDB_WINDOWS_UTF8_FILENAMES)
 endif()
@@ -789,6 +795,10 @@ set(SOURCES
         table/block_based/binary_search_index_reader.cc
         examples/var.h
         examples/var.cpp
+        examples/timer.h
+        examples/timer.cpp
+        examples/stats.h
+        examples/stats.cpp
         table/block_based/block.cc
         table/block_based/block_based_table_builder.cc
         table/block_based/block_based_table_factory.cc

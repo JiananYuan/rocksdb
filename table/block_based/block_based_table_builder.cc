@@ -1960,6 +1960,7 @@ Status BlockBasedTableBuilder::Finish() {
   WriteFilterBlock(&meta_index_builder);
   WriteIndexBlock(&meta_index_builder, &index_block_handle);
   adgMod::idx_sz += index_block_handle.size();
+  adgMod::num_sst += 1;
   WriteCompressionDictBlock(&meta_index_builder);
   WriteRangeDelBlock(&meta_index_builder);
   WritePropertiesBlock(&meta_index_builder);

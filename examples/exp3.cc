@@ -14,6 +14,9 @@
 #include "rocksdb/table.h"
 #include "cxxopts.hpp"
 #include "var.h"
+#include "stats.h"
+#define ENABLE_MEM_TEST
+#define INTERNAL_TIMER
 
 using ROCKSDB_NAMESPACE::DB;
 using ROCKSDB_NAMESPACE::Options;
@@ -48,7 +51,7 @@ int main(int argc, char** argv) {
   std::cout << "[START TIME] " << buffer << std::endl;
 
   // READ FROM ARGS
-  std::string db_path, write_type, ds_name, exp_log_file;
+  std::string db_path, write_type, read_type, ds_name, exp_log_file;
   double num_data, num_ops;
   const string dir_path = "/home/yjn/Desktop/VLDB/Dataset/";
   const std::string kWrite = "W";
@@ -59,17 +62,18 @@ int main(int argc, char** argv) {
   cxxopts::Options commandline_options("leader tree test", "Testing leader tree.");
   commandline_options.add_options()
     ("h,help", "print help message", cxxopts::value<bool>()->default_value("false"))
-    ("p,db_path", "path of the database", cxxopts::value<std::string>(db_path)->default_value("books_range"))
+    ("p,db_path", "path of the database", cxxopts::value<std::string>(db_path)->default_value("/mnt/rocksdb/books"))
     ("n,number_data", "data number (million)", cxxopts::value<double>(num_data)->default_value("64"))
     ("m,number_ops", "operation number (million)", cxxopts::value<double>(num_ops)->default_value("10"))
     ("w,write_type", "write rand or seq", cxxopts::value<std::string>(write_type)->default_value("rand"))
+    ("l,lookup_type", "read rand or seq", cxxopts::value<std::string>(read_type)->default_value("zipf"))
     ("d,dataset_name", "name of the dataset", cxxopts::value<std::string>(ds_name)->default_value("books"))
     ("k, key_size", "byte size of the key", cxxopts::value<uint32_t>(key_size)->default_value("20"))
     ("v, value_size", "byte size of the value", cxxopts::value<uint32_t>(value_size)->default_value("64"))
     ("o, output_file", "path of result output file", cxxopts::value<std::string>(exp_log_file)->default_value("minilog"))
     ("r, range_query", "use range query", cxxopts::value<bool>(range_query)->default_value("false"))
     ("s, start_type", "start type id", cxxopts::value<int>(start_type)->default_value("0"))
-    ("e, end_type", "end type id", cxxopts::value<int>(end_type)->default_value("4"));
+    ("f, end_type", "end type id", cxxopts::value<int>(end_type)->default_value("0"));
   auto result = commandline_options.parse(argc, argv);
   if (result.count("help")) {
     printf("%s", commandline_options.help().c_str());
@@ -90,10 +94,10 @@ int main(int argc, char** argv) {
   // CONFIG LEADER-TREE
   DB* db;
   Options options;
-  // options.IncreaseParallelism();
-  // options.OptimizeLevelStyleCompaction();
+//  options.IncreaseParallelism();
+//  options.OptimizeLevelStyleCompaction();
   options.create_if_missing = true;
-  // options.level_compaction_dynamic_level_bytes = true;
+//  options.level_compaction_dynamic_level_bytes = true;
   options.write_buffer_size = 64 * 1024 * 1024;
   options.target_file_size_base = 64 * 1024 * 1024;
   options.paranoid_checks = false;
@@ -103,6 +107,24 @@ int main(int argc, char** argv) {
   rocksdb::BlockBasedTableOptions table_options;
   table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, false));
   options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+#ifdef ENABLE_MEM_TEST
+  std::cout << "rm tmpfs dbpath if exists" << std::endl;
+  system("rm /mnt/rocksdb/books/ -r");
+  
+  // NOT USEFUL!! XXXXXX
+  // std::unique_ptr<ROCKSDB_NAMESPACE::Env> mem_env(ROCKSDB_NAMESPACE::NewMemEnv(ROCKSDB_NAMESPACE::Env::Default()));
+  // options.env = mem_env.get();
+
+  // USE COMMANDS BELOW
+  // sudo mount -t tmpfs -o size=10G tmpfs /mnt/rocksdb
+  // set your RocksDB directory to /mnt/rocksdb in your code or configuration file. This will make RocksDB use the in-memory file system for storing its data files.
+
+  // RECOVER
+  // Before you can unmount the tmpfs or ramfs, you need to make sure that no processes are using it. You can use the lsof command to check for any open files in the mount point. For example, lsof /mnt/rocksdb.
+  // Once you have ensured that no processes are using the tmpfs or ramfs, you can unmount it using the umount command. For example, sudo umount /mnt/rocksdb.
+  // Please note that any data stored in the tmpfs or ramfs will be lost once it is unmounted. So make sure to backup any important data before unmounting.
+
+#endif
   ReadOptions read_options = ReadOptions();
   WriteOptions write_options = WriteOptions();
   write_options.sync = false;
@@ -140,9 +162,6 @@ int main(int argc, char** argv) {
   std::cout << "bulkload time : " << static_cast<uint64_t>(bulkload_time) / 1e9 << " s" << std::endl;
   exp_log << "bulkload time : " << static_cast<uint64_t>(bulkload_time) / 1e9 << " s" << std::endl;
   in.close();
-  delete db;
-  options.max_background_jobs = 1;
-  status = DB::Open(options, db_path, &db);
 
   // TEST CASE
   for (int ei = start_type; ei < end_type; ei += 1) {
@@ -161,7 +180,11 @@ int main(int argc, char** argv) {
         break;
       case 3:
         std::cout << "[3/4] testing-4 (read-only)... " << std::endl;
-        in.open(ds_zipf_query);
+        if (read_type == "zipf") {
+          in.open(ds_zipf_query);
+        } else if (read_type == "rand") {
+          in.open(ds_rand_query);
+        }
         break;
     }
     double ops_time = 0;
@@ -232,9 +255,14 @@ int main(int argc, char** argv) {
     }
     if (in.is_open())   in.close();
   }
-  
+#ifdef INTERNAL_TIMER
+  auto ins = adgMod::Stats::GetInstance();
+  for (int i = 0; i <= 6; i += 1) {
+    std::cout << "timer " << i << " : " << ins->ReportTime(i, kOps) << std::endl;
+  }
+#endif
   std::cout << "[4/4] closing database..." << std::endl;
-  std::cout << "index size: " << adgMod::idx_sz << std::endl;
+  std::cout << "index size: " << adgMod::idx_sz * 1.0 / adgMod::num_sst << std::endl;
   delete db;
   exp_log.close();
   now = std::chrono::system_clock::now();

@@ -107,6 +107,7 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "utilities/trace/replayer_impl.h"
+#include "examples/stats.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -2188,6 +2189,10 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
   PinnedIteratorsManager pinned_iters_mgr;
   if (!done) {
     PERF_TIMER_GUARD(get_from_output_files_time);
+#ifdef INTERNAL_TIMER
+    auto ins = adgMod::Stats::GetInstance();
+    ins->StartTimer(6);
+#endif
     sv->current->Get(
         read_options, lkey, get_impl_options.value, get_impl_options.columns,
         timestamp, &s, &merge_context, &max_covering_tombstone_seq,
@@ -2197,6 +2202,9 @@ Status DBImpl::GetImpl(const ReadOptions& read_options, const Slice& key,
         get_impl_options.get_value ? get_impl_options.callback : nullptr,
         get_impl_options.get_value ? get_impl_options.is_blob_index : nullptr,
         get_impl_options.get_value);
+#ifdef INTERNAL_TIMER
+    ins->PauseTimer(6);
+#endif
     RecordTick(stats_, MEMTABLE_MISS);
   }
 

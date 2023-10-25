@@ -73,6 +73,7 @@
 #include "util/crc32c.h"
 #include "util/stop_watch.h"
 #include "util/string_util.h"
+#include "examples/stats.h"
 
 namespace ROCKSDB_NAMESPACE {
 namespace {
@@ -771,11 +772,17 @@ Status BlockBasedTable::Open(
   if (!s.ok()) {
     return s;
   }
+#ifdef INTERNAL_TIMER
+  auto ins = adgMod::Stats::GetInstance();
+  ins->StartTimer(1);
+#endif
   s = new_table->PrefetchIndexAndFilterBlocks(
       ro, prefetch_buffer.get(), metaindex_iter.get(), new_table.get(),
       prefetch_all, table_options, level, file_size,
       max_file_size_for_l0_meta_pin, &lookup_context);
-
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(1);
+#endif
   if (s.ok()) {
     // Update tail prefetch stats
     assert(prefetch_buffer.get() != nullptr);
@@ -2093,6 +2100,9 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
                             GetContext* get_context,
                             const SliceTransform* prefix_extractor,
                             bool skip_filters) {
+#ifdef INTERNAL_TIMER
+  auto ins = adgMod::Stats::GetInstance();
+#endif
   // Similar to Bloom filter !may_match
   // If timestamp is beyond the range of the table, skip
   if (!TimestampMayMatch(read_options)) {
@@ -2119,9 +2129,15 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
         read_options.snapshot != nullptr;
   }
   TEST_SYNC_POINT("BlockBasedTable::Get:BeforeFilterMatch");
+#ifdef INTERNAL_TIMER
+  ins->StartTimer(3);
+#endif
   const bool may_match =
       FullFilterKeyMayMatch(filter, key, no_io, prefix_extractor, get_context,
                             &lookup_context, read_options);
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(3);
+#endif
   TEST_SYNC_POINT("BlockBasedTable::Get:AfterFilterMatch");
   if (may_match) {
     IndexBlockIter iiter_on_stack;
@@ -2143,7 +2159,14 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
         rep_->internal_comparator.user_comparator()->timestamp_size();
     bool matched = false;  // if such user key matched a key in SST
     bool done = false;
-    for (iiter->Seek(key); iiter->Valid() && !done; iiter->Next()) {
+#ifdef INTERNAL_TIMER
+    ins->StartTimer(2);
+#endif
+    iiter->Seek(key);
+#ifdef INTERNAL_TIMER
+    ins->PauseTimer(2);
+#endif
+    for (; iiter->Valid() && !done; ) {
       IndexValue v = iiter->value();
 
       if (!v.first_internal_key.empty() && !skip_filters &&
@@ -2181,8 +2204,13 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
         s = biter.status();
         break;
       }
-
+#ifdef INTERNAL_TIMER
+  ins->StartTimer(2);
+#endif
       bool may_exist = biter.SeekForGet(key);
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(2);
+#endif
       // If user-specified timestamp is supported, we cannot end the search
       // just because hash index lookup indicates the key+ts does not exist.
       if (!may_exist && ts_sz == 0) {
@@ -2193,6 +2221,9 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
         done = true;
       } else {
         // Call the *saver function on each entry/block until it returns false
+#ifdef INTERNAL_TIMER
+  ins->StartTimer(2);
+#endif
         for (; biter.Valid(); biter.Next()) {
           ParsedInternalKey parsed_key;
           Status pik_status = ParseInternalKey(
@@ -2212,6 +2243,9 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
             break;
           }
         }
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(2);
+#endif
         s = biter.status();
         if (!s.ok()) {
           break;
@@ -2236,6 +2270,13 @@ Status BlockBasedTable::Get(const ReadOptions& read_options, const Slice& key,
         // Avoid the extra Next which is expensive in two-level indexes
         break;
       }
+#ifdef INTERNAL_TIMER
+    ins->StartTimer(2);
+#endif
+      iiter->Next();
+#ifdef INTERNAL_TIMER
+    ins->PauseTimer(2);
+#endif
     }
     if (matched && filter != nullptr) {
       if (rep_->whole_key_filtering) {

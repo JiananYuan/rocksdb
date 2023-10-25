@@ -75,6 +75,7 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
+#include "examples/stats.h"
 
 // Generate the regular and coroutine versions of some methods by
 // including version_set_sync_and_async.h twice
@@ -2377,7 +2378,14 @@ void Version::Get(const ReadOptions& read_options, const LookupKey& k,
                 storage_info_.num_non_empty_levels_,
                 &storage_info_.file_indexer_, user_comparator(),
                 internal_comparator());
+#ifdef INTERNAL_TIMER
+  auto ins = adgMod::Stats::GetInstance();
+  ins->StartTimer(0);
+#endif
   FdWithKeyRange* f = fp.GetNextFile();
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(0);
+#endif
 
   while (f != nullptr) {
     if (*max_covering_tombstone_seq > 0) {
@@ -2490,7 +2498,13 @@ void Version::Get(const ReadOptions& read_options, const LookupKey& k,
         *status = Status::Corruption(Status::SubCode::kMergeOperatorFailed);
         return;
     }
+#ifdef INTERNAL_TIMER
+  ins->StartTimer(0);
+#endif
     f = fp.GetNextFile();
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(0);
+#endif
   }
   if (db_statistics_ != nullptr) {
     get_context.ReportCounters();

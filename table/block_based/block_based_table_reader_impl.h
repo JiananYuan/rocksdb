@@ -13,6 +13,7 @@
 #include "block_cache.h"
 #include "table/block_based/block_based_table_reader.h"
 #include "table/block_based/reader_common.h"
+#include "examples/stats.h"
 
 // The file contains some member functions of BlockBasedTable that
 // cannot be implemented in block_based_table_reader.cc because
@@ -59,6 +60,10 @@ TBlockIter* BlockBasedTable::NewDataBlockIterator(
     return iter;
   }
 
+#ifdef INTERNAL_TIMER
+  auto ins = adgMod::Stats::GetInstance();
+#endif
+
   CachableEntry<Block> block;
   if (rep_->uncompression_dict_reader && block_type == BlockType::kData) {
     CachableEntry<UncompressionDict> uncompression_dict;
@@ -77,15 +82,27 @@ TBlockIter* BlockBasedTable::NewDataBlockIterator(
     const UncompressionDict& dict = uncompression_dict.GetValue()
                                         ? *uncompression_dict.GetValue()
                                         : UncompressionDict::GetEmptyDict();
+#ifdef INTERNAL_TIMER
+  ins->StartTimer(4);
+#endif
     s = RetrieveBlock(prefetch_buffer, ro, handle, dict,
                       &block.As<IterBlocklike>(), get_context, lookup_context,
                       for_compaction,
                       /* use_cache */ true, async_read);
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(4);
+#endif
   } else {
+#ifdef INTERNAL_TIMER
+  ins->StartTimer(4);
+#endif
     s = RetrieveBlock(
         prefetch_buffer, ro, handle, UncompressionDict::GetEmptyDict(),
         &block.As<IterBlocklike>(), get_context, lookup_context, for_compaction,
         /* use_cache */ true, async_read);
+#ifdef INTERNAL_TIMER
+  ins->PauseTimer(4);
+#endif
   }
 
   if (s.IsTryAgain() && async_read) {
